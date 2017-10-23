@@ -1,1 +1,1 @@
-web: tat-ru-bot -port=$PORT
+web: tat-ru-bot

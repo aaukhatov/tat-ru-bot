@@ -25,7 +25,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	updates := bot.ListenForWebhook("/" + bot.Token)
+	updates := bot.ListenForWebhook("/")
 	go http.ListenAndServe(":" + port, nil)
 
 	for update:= range updates {
