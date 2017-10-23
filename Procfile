@@ -1,1 +1,1 @@
-web: tat-ru-bot
+web: $GOPATH/bin/tat-ru-bot
