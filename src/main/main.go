@@ -25,19 +25,20 @@ func main() {
 		log.Fatal(err)
 	}
 
-	updates := bot.ListenForWebhook("/")
+	updates := bot.ListenForWebhook("/" + bot.Token)
 	go http.ListenAndServe(":" + port, nil)
 
 	for update:= range updates {
 		var msg tgbotapi.MessageConfig
 		log.Println("Received text", update.Message.Text)
 		switch update.Message.Text {
-		case "get translate":
+		case "test":
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "This translate a word")
 		default:
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "The command not supported")
 		}
 
+		msg.ReplyToMessageID = update.Message.MessageID
 		bot.Send(msg)
 	}
 }
