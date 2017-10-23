@@ -6,7 +6,7 @@ import ("log"
 	"os"
 )
 
-const webhook = "asd"
+const webhook = "https://tat-ru-bot.herokuapp.com/"
 
 func main() {
 	log.Print("I'm a bot!")
