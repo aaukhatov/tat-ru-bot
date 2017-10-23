@@ -1,1 +1,1 @@
-web: $GOPATH/src/github.com/aukhatov/TatRuBot/main
+web: bin/main
