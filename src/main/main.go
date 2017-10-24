@@ -5,15 +5,16 @@ import ("log"
 	"net/http"
 	"os"
 	"fmt"
-	"golang.org/x/net/html"
 	"io/ioutil"
+	"encoding/json"
+	"strings"
 )
 
 const webhook = "https://tat-ru-bot.herokuapp.com/"
-const tat_dictionary = "http://tatpoisk.net/dict/"
+const yandex_api = "dict.1.1.20171024T175215Z.d79c6c40e3a0bf31.0f44341ac31440368c75d3e143c641ab1a7acec6"
 
 func main() {
-	translate("")
+	telegram()
 }
 
 func telegram() {
@@ -31,35 +32,56 @@ func telegram() {
 	}
 	updates := bot.ListenForWebhook("/")
 	go http.ListenAndServe(":"+port, nil)
+
 	for update := range updates {
 		var msg tgbotapi.MessageConfig
-		log.Println("Received text", update.Message.Text)
-		switch update.Message.Text {
-		case "test":
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "This translate a word")
-		default:
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "The command not supported")
-		}
-
+		log.Println("Translated request:", update.Message.Text)
+		inputMsg := strings.Split(update.Message.Text, " ")
+		// берем первое слово всегда
+		translatedWord := translate(inputMsg[0])
+		msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,","))
 		msg.ReplyToMessageID = update.Message.MessageID
 		bot.Send(msg)
 	}
 }
 
-func translate(msg string) {
-	resp, err := http.Get("http://tatpoisk.net/dict/мин")
+func translate(msg string) []string {
+
+	resp, err := http.Get("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" +
+		yandex_api + "&lang=ru-tt&text=" + msg)
+
 	if err != nil {
-		// handle error
+		log.Println(err)
 	}
+
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	z := html.NewTokenizer(resp.Body)
-	fmt.Println(z.Next())
-	/*for {
-		tt := z.Next()
-		fmt.Println(tt)
-	}*/
-	result := string(body)
-	fmt.Println(result)
 
+	var translatedWord *DicResult
+	var translatedResponse []string
+	json.Unmarshal(body, &translatedWord)
+
+	for _, def := range translatedWord.Def {
+		for _, tr := range def.Tr {
+			translatedResponse = append(translatedResponse, tr.Text)
+		}
+	}
+
+	return translatedResponse
+}
+
+type DicResult struct {
+	Head struct {
+	} `json:"head"`
+	Def []struct {
+		Text string `json:"text"`
+		Pos  string `json:"pos"`
+		Tr   []struct {
+			Text string `json:"text"`
+			Pos  string `json:"pos"`
+			Mean []struct {
+				Text string `json:"text"`
+			} `json:"mean"`
+		} `json:"tr"`
+	} `json:"def"`
 }
