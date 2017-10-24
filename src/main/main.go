@@ -35,10 +35,17 @@ func telegram() {
 	for update := range updates {
 		var msg tgbotapi.MessageConfig
 		log.Println("Translated request:", update.Message.Text)
-		inputMsg := strings.Split(update.Message.Text, " ")
-		// берем первое слово всегда
-		translatedWord := translate(inputMsg[0])
-		msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,","))
+		switch update.Message.Text {
+		case "/rutat":
+			inputMsg := strings.Split(update.Message.Text, " ")
+			// берем первое слово всегда
+			translatedWord := translate(inputMsg[1])
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,","))
+
+		default:
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода.")
+		}
+
 		msg.ReplyToMessageID = update.Message.MessageID
 		bot.Send(msg)
 	}
