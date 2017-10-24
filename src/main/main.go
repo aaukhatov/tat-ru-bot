@@ -34,8 +34,8 @@ func telegram() {
 
 	for update := range updates {
 		var msg tgbotapi.MessageConfig
-		log.Println("Translated request:", update.Message.Text)
-		switch update.Message.Text {
+		log.Printf("Translated request: %s | command %s", update.Message.Text, update.Message.Command())
+		switch update.Message.Command() {
 		case "/rutat":
 			inputMsg := strings.Split(update.Message.Text, " ")
 			// берем первое слово всегда
