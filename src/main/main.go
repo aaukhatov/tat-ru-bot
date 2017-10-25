@@ -73,12 +73,22 @@ func telegram(userState map[int]string) {
 			inputMsg := strings.Split(update.Message.Text, " ")
 			// берем первое слово всегда
 			translatedWord := translate(inputMsg[0], "ru-tt")
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
+			if len(translatedWord) == 0 {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено. Возможно стоит переключить словарь?\n"+
+					"/rutat - русско-татарский\n/tatru - татарско-русский")
+			} else {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
+			}
 		case "tatru":
 			inputMsg := strings.Split(update.Message.Text, " ")
 			// берем первое слово всегда
 			translatedWord := translate(inputMsg[0], "tt-ru")
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
+			if len(translatedWord) == 0 {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено. Возможно стоит переключить словарь?\n"+
+					"/rutat - русско-татарский\n/tatru - татарско-русский")
+			} else {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
+			}
 		case "start":
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода:\n" +
 				"/rutat - русско-татарский\n/tatru - татарско-русский")
