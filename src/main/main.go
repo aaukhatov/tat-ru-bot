@@ -74,7 +74,7 @@ func telegram(userState map[int]string) {
 			// берем первое слово всегда
 			translatedWord := translate(inputMsg[0], "ru-tt")
 			if len(translatedWord) == 0 {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено. Возможно стоит переключить словарь?\n"+
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено.\nВозможно стоит переключить словарь?\n"+
 					"/rutat - русско-татарский\n/tatru - татарско-русский")
 			} else {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
@@ -84,7 +84,7 @@ func telegram(userState map[int]string) {
 			// берем первое слово всегда
 			translatedWord := translate(inputMsg[0], "tt-ru")
 			if len(translatedWord) == 0 {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено. Возможно стоит переключить словарь?\n"+
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено.\nВозможно стоит переключить словарь?\n"+
 					"/rutat - русско-татарский\n/tatru - татарско-русский")
 			} else {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
