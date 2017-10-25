@@ -24,7 +24,6 @@ func telegram(userState map[int]string) {
 	if err != nil {
 		log.Panic(err)
 	}
-	//var userState = make(map[int]string)
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 	_, err = bot.SetWebhook(tgbotapi.NewWebhook(webhook))
@@ -46,13 +45,11 @@ func telegram(userState map[int]string) {
 			log.Println("The user not found.")
 			if !update.Message.IsCommand() {
 				log.Println("It's not command")
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевеода:\n" +
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода:\n" +
 					"/rutat - русско-татарский\n/tatru - татарско-русский")
-				bot.Send(msg)
 			}  else {
 				userState[update.Message.From.ID] = update.Message.Command()
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
-				bot.Send(msg)
 			}
 		} else {
 			log.Println("The user found.")
@@ -61,6 +58,7 @@ func telegram(userState map[int]string) {
 				log.Println("The user comamnd update.")
 				userState[update.Message.From.ID] = update.Message.Command()
 				command = update.Message.Command()
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
 			}
 		}
 
