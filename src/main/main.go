@@ -40,6 +40,7 @@ func telegram(userState map[int]string) {
 
 		var command, ok = userState[update.Message.From.ID]
 		log.Println("Command:", command)
+		log.Println("user state:", userState)
 
 		if !ok {
 			log.Println("The user not found.")
@@ -48,12 +49,10 @@ func telegram(userState map[int]string) {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевеода:\n" +
 					"/rutat - русско-татарский\n/tatru - татарско-русский")
 				bot.Send(msg)
-				return
 			}  else {
 				userState[update.Message.From.ID] = update.Message.Command()
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
 				bot.Send(msg)
-				return
 			}
 		} else {
 			log.Println("The user found.")
