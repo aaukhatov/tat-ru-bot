@@ -14,16 +14,17 @@ const yandex_api = "dict.1.1.20171024T175215Z.d79c6c40e3a0bf31.0f44341ac31440368
 const telegram_token = "384640172:AAFOh_vCuFizDclHRxjpsY0SGoAtlsSCHs4"
 
 func main() {
-	telegram()
+	var userState = make(map[int]string)
+	telegram(userState)
 }
 
-func telegram() {
+func telegram(userState map[int]string) {
 	port := os.Getenv("PORT")
 	bot, err := tgbotapi.NewBotAPI(telegram_token)
 	if err != nil {
 		log.Panic(err)
 	}
-	var userState = make(map[int]string)
+	//var userState = make(map[int]string)
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 	_, err = bot.SetWebhook(tgbotapi.NewWebhook(webhook))
@@ -51,7 +52,8 @@ func telegram() {
 			userState[update.Message.From.ID] = update.Message.Command()
 		} else {
 			log.Println("The user found.")
-			if update.Message.Command() != userState[update.Message.From.ID] {
+			if update.Message.IsCommand() &&
+				update.Message.Command() != userState[update.Message.From.ID] {
 				log.Println("The user comamnd update.")
 				userState[update.Message.From.ID] = update.Message.Command()
 				command = update.Message.Command()
