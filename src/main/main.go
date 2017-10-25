@@ -53,8 +53,8 @@ func telegram(userState map[int]string) {
 			}
 		} else {
 			log.Println("The user found.")
-			if update.Message.IsCommand() &&
-				update.Message.Command() != userState[update.Message.From.ID] {
+			if update.Message.IsCommand() && (update.Message.Command() == "rutat" ||
+				update.Message.Command() == "tatru") && update.Message.Command() != userState[update.Message.From.ID] {
 				log.Println("The user comamnd update.")
 				userState[update.Message.From.ID] = update.Message.Command()
 				command = update.Message.Command()
@@ -74,6 +74,9 @@ func telegram(userState map[int]string) {
 			// берем первое слово всегда
 			translatedWord := translate(inputMsg[0], "tt-ru")
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
+		case "start":
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода:\n" +
+				"/rutat - русско-татарский\n/tatru - татарско-русский")
 		}
 
 		bot.Send(msg)
