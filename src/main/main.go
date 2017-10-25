@@ -36,9 +36,10 @@ func telegram(userState map[int]string) {
 
 	for update := range updates {
 		var msg tgbotapi.MessageConfig
-		log.Printf("Translated request: %s | command %s", update.Message.Text, update.Message.Command())
+		log.Printf("Request: %s", update.Message)
 
 		var command, ok = userState[update.Message.From.ID]
+		log.Println("Command:", command)
 
 		if !ok {
 			log.Println("The user not found.")
@@ -76,8 +77,6 @@ func telegram(userState map[int]string) {
 			// берем первое слово всегда
 			translatedWord := translate(inputMsg[0], "tt-ru")
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
-		default:
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода.")
 		}
 
 		bot.Send(msg)
