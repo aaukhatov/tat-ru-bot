@@ -49,7 +49,12 @@ func telegram(userState map[int]string) {
 					"/rutat - русско-татарский\n/tatru - татарско-русский")
 			}  else {
 				userState[update.Message.From.ID] = update.Message.Command()
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
+				if update.Message.Command() == "rutat" || update.Message.Command() == "tatru" {
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
+				} else {
+					msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода:\n" +
+						"/rutat - русско-татарский\n/tatru - татарско-русский")
+				}
 			}
 		} else {
 			log.Println("The user found.")
