@@ -38,10 +38,10 @@ func telegram(userState map[int]string) {
 		var msg tgbotapi.MessageConfig
 		log.Printf("Translated request: %s | command %s", update.Message.Text, update.Message.Command())
 
-		var command, err = userState[update.Message.From.ID]
+		var command, ok = userState[update.Message.From.ID]
 
-		if err {
-			log.Println("The user not found.")
+		if !ok {
+			log.Println("The user not found.", ok)
 			if !update.Message.IsCommand() {
 				log.Println("It's not command")
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевеода:\n" +
