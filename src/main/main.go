@@ -7,7 +7,6 @@ import ("log"
 	"io/ioutil"
 	"encoding/json"
 	"strings"
-	"sync"
 )
 
 const webhook = "https://tat-ru-bot.herokuapp.com/"
@@ -49,9 +48,7 @@ func telegram(userState *UserState) {
 func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState *UserState) {
 	var msg tgbotapi.MessageConfig
 	log.Println("User lock", userState)
-	userState.Lock()
 	var command, ok = userState.value[update.Message.From.ID]
-	userState.Unlock()
 	log.Println("User unlock", userState)
 
 	msg, command = preDefineCommand(ok, update, msg, userState, command)
@@ -87,9 +84,7 @@ func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfi
 			log.Println("It's not command")
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
 		} else {
-			userState.Lock()
 			userState.value[update.Message.From.ID] = update.Message.Command()
-			userState.Unlock()
 
 			if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
@@ -98,16 +93,12 @@ func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfi
 			}
 		}
 	} else if update.Message.IsCommand() {
-		userState.RLock()
 		newCommand := userState.value[update.Message.From.ID]
-		userState.RUnlock()
 
 		if update.Message.Command() != newCommand &&
 			update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 			log.Println("The user comamnd update.")
-			userState.Lock()
 			userState.value[update.Message.From.ID] = update.Message.Command()
-			userState.Unlock()
 			command = update.Message.Command()
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
 		}
@@ -157,6 +148,5 @@ type DicResult struct {
 }
 
 type UserState struct {
-	sync.RWMutex
 	value map[int]string
 }
