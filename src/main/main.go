@@ -22,11 +22,11 @@ const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
 func main() {
-	user := &UserState{}
-	telegram(user)
+	user := new(map[int]string)
+	telegram(*user)
 }
 
-func telegram(userState *UserState) {
+func telegram(userState map[int]string) {
 	port := os.Getenv("PORT")
 	bot, err := tgbotapi.NewBotAPI(telegramToken)
 	if err != nil {
@@ -45,10 +45,10 @@ func telegram(userState *UserState) {
 		go executeCommand(update, bot, userState)
 	}
 }
-func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState *UserState) {
+func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[int]string) {
 	var msg tgbotapi.MessageConfig
 	log.Println("User lock", userState)
-	var command, ok = userState.value[update.Message.From.ID]
+	var command, ok = userState[update.Message.From.ID]
 	log.Println("User unlock", userState)
 
 	msg, command = preDefineCommand(ok, update, msg, userState, command)
@@ -78,13 +78,13 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState *Use
 	bot.Send(msg)
 }
 func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig,
-	userState *UserState, command string) (tgbotapi.MessageConfig, string) {
+	userState map[int]string, command string) (tgbotapi.MessageConfig, string) {
 	if !ok {
 		if !update.Message.IsCommand() {
 			log.Println("It's not command")
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
 		} else {
-			userState.value[update.Message.From.ID] = update.Message.Command()
+			userState[update.Message.From.ID] = update.Message.Command()
 
 			if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
@@ -93,12 +93,12 @@ func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfi
 			}
 		}
 	} else if update.Message.IsCommand() {
-		newCommand := userState.value[update.Message.From.ID]
+		newCommand := userState[update.Message.From.ID]
 
 		if update.Message.Command() != newCommand &&
 			update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 			log.Println("The user comamnd update.")
-			userState.value[update.Message.From.ID] = update.Message.Command()
+			userState[update.Message.From.ID] = update.Message.Command()
 			command = update.Message.Command()
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
 		}
