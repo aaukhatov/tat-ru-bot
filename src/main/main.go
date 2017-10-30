@@ -48,10 +48,11 @@ func telegram(userState *UserState) {
 }
 func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState *UserState) {
 	var msg tgbotapi.MessageConfig
-
+	log.Println("User lock", userState)
 	userState.m.Lock()
 	var command, ok = userState.value[update.Message.From.ID]
 	userState.m.Unlock()
+	log.Println("User unlock", userState)
 
 	msg, command = preDefineCommand(ok, update, msg, userState, command)
 
@@ -79,7 +80,8 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState *Use
 	}
 	bot.Send(msg)
 }
-func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig, userState *UserState, command string) (tgbotapi.MessageConfig, string) {
+func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig,
+	userState *UserState, command string) (tgbotapi.MessageConfig, string) {
 	if !ok {
 		if !update.Message.IsCommand() {
 			log.Println("It's not command")
