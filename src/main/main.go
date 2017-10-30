@@ -23,8 +23,7 @@ const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
 func main() {
-	var userState *UserState
-	telegram(userState)
+	telegram(&UserState{})
 }
 
 func telegram(userState *UserState) {
