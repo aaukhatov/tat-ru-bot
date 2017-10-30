@@ -23,7 +23,8 @@ const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
 func main() {
-	telegram(&UserState{})
+	user := &UserState{}
+	telegram(user)
 }
 
 func telegram(userState *UserState) {
@@ -48,9 +49,9 @@ func telegram(userState *UserState) {
 func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState *UserState) {
 	var msg tgbotapi.MessageConfig
 	log.Println("User lock", userState)
-	userState.m.Lock()
+	userState.Lock()
 	var command, ok = userState.value[update.Message.From.ID]
-	userState.m.Unlock()
+	userState.Unlock()
 	log.Println("User unlock", userState)
 
 	msg, command = preDefineCommand(ok, update, msg, userState, command)
@@ -86,9 +87,9 @@ func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfi
 			log.Println("It's not command")
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
 		} else {
-			userState.m.Lock()
+			userState.Lock()
 			userState.value[update.Message.From.ID] = update.Message.Command()
-			userState.m.Unlock()
+			userState.Unlock()
 
 			if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
@@ -97,16 +98,16 @@ func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfi
 			}
 		}
 	} else if update.Message.IsCommand() {
-		userState.m.RLock()
+		userState.RLock()
 		newCommand := userState.value[update.Message.From.ID]
-		userState.m.RUnlock()
+		userState.RUnlock()
 
 		if update.Message.Command() != newCommand &&
 			update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 			log.Println("The user comamnd update.")
-			userState.m.Lock()
+			userState.Lock()
 			userState.value[update.Message.From.ID] = update.Message.Command()
-			userState.m.Unlock()
+			userState.Unlock()
 			command = update.Message.Command()
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
 		}
@@ -156,6 +157,6 @@ type DicResult struct {
 }
 
 type UserState struct {
-	m sync.RWMutex
+	sync.RWMutex
 	value map[int]string
 }
