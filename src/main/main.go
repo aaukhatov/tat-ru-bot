@@ -7,11 +7,12 @@ import ("log"
 	"io/ioutil"
 	"encoding/json"
 	"strings"
+	"sync"
 )
 
 const webhook = "https://tat-ru-bot.herokuapp.com/"
-const yandex_api = "dict.1.1.20171024T175215Z.d79c6c40e3a0bf31.0f44341ac31440368c75d3e143c641ab1a7acec6"
-const telegram_token = "384640172:AAFOh_vCuFizDclHRxjpsY0SGoAtlsSCHs4"
+const yandexApi = "dict.1.1.20171024T175215Z.d79c6c40e3a0bf31.0f44341ac31440368c75d3e143c641ab1a7acec6"
+const telegramToken = "384640172:AAFOh_vCuFizDclHRxjpsY0SGoAtlsSCHs4"
 const helpMessage = "Укажите направление перевода:\n" +
 	"/rutat - русско-татарский\n/tatru - татарско-русский"
 const commandRuTat = "rutat"
@@ -22,13 +23,13 @@ const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
 func main() {
-	var userState = make(map[int]string)
+	var userState *UserState
 	telegram(userState)
 }
 
-func telegram(userState map[int]string) {
+func telegram(userState *UserState) {
 	port := os.Getenv("PORT")
-	bot, err := tgbotapi.NewBotAPI(telegram_token)
+	bot, err := tgbotapi.NewBotAPI(telegramToken)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -45,10 +46,12 @@ func telegram(userState map[int]string) {
 		go executeCommand(update, bot, userState)
 	}
 }
-func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[int]string) {
+func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState *UserState) {
 	var msg tgbotapi.MessageConfig
 
-	var command, ok = userState[update.Message.From.ID]
+	userState.m.Lock()
+	var command, ok = userState.value[update.Message.From.ID]
+	userState.m.Unlock()
 
 	msg, command = preDefineCommand(ok, update, msg, userState, command)
 
@@ -76,23 +79,33 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[
 	}
 	bot.Send(msg)
 }
-func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig, userState map[int]string, command string) (tgbotapi.MessageConfig, string) {
+func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig, userState *UserState, command string) (tgbotapi.MessageConfig, string) {
 	if !ok {
 		if !update.Message.IsCommand() {
 			log.Println("It's not command")
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
 		} else {
-			userState[update.Message.From.ID] = update.Message.Command()
+			userState.m.Lock()
+			userState.value[update.Message.From.ID] = update.Message.Command()
+			userState.m.Unlock()
+
 			if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
 			} else {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
 			}
 		}
-	} else if update.Message.IsCommand() && update.Message.Command() != userState[update.Message.From.ID] {
-		if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
+	} else if update.Message.IsCommand() {
+		userState.m.RLock()
+		newCommand := userState.value[update.Message.From.ID]
+		userState.m.RUnlock()
+
+		if update.Message.Command() != newCommand &&
+			update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 			log.Println("The user comamnd update.")
-			userState[update.Message.From.ID] = update.Message.Command()
+			userState.m.Lock()
+			userState.value[update.Message.From.ID] = update.Message.Command()
+			userState.m.Unlock()
 			command = update.Message.Command()
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
 		}
@@ -103,7 +116,7 @@ func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfi
 func translate(msg string, dictionary string) []string {
 
 	resp, err := http.Get("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" +
-		yandex_api + "&lang=" + dictionary + "&text=" + msg)
+		yandexApi + "&lang=" + dictionary + "&text=" + msg)
 
 	if err != nil {
 		log.Println(err)
@@ -139,4 +152,9 @@ type DicResult struct {
 			} `json:"mean"`
 		} `json:"tr"`
 	} `json:"def"`
+}
+
+type UserState struct {
+	m sync.RWMutex
+	value map[int]string
 }
