@@ -42,16 +42,16 @@ func telegram(userState map[int]string) {
 	go http.ListenAndServe(":"+port, nil)
 
 	for update := range updates {
-		var msg tgbotapi.MessageConfig
-
-		var command, ok = userState[update.Message.From.ID]
-
-		msg, command = preDefineCommand(ok, update, msg, userState, command)
-
-		go executeCommand(command, update, msg, bot)
+		go executeCommand(update, bot, userState)
 	}
 }
-func executeCommand(command string, update tgbotapi.Update, msg tgbotapi.MessageConfig, bot *tgbotapi.BotAPI) {
+func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[int]string) {
+	var msg tgbotapi.MessageConfig
+
+	var command, ok = userState[update.Message.From.ID]
+
+	msg, command = preDefineCommand(ok, update, msg, userState, command)
+
 	switch command {
 	case commandRuTat:
 		inputMsg := strings.Split(update.Message.Text, " ")
