@@ -12,6 +12,14 @@ import ("log"
 const webhook = "https://tat-ru-bot.herokuapp.com/"
 const yandex_api = "dict.1.1.20171024T175215Z.d79c6c40e3a0bf31.0f44341ac31440368c75d3e143c641ab1a7acec6"
 const telegram_token = "384640172:AAFOh_vCuFizDclHRxjpsY0SGoAtlsSCHs4"
+const helpMessage = "Укажите направление перевода:\n" +
+	"/rutat - русско-татарский\n/tatru - татарско-русский"
+const commandRuTat = "rutat"
+const commandTatRu = "tatru"
+const wordNotFound = "Слово не найдено.\nВозможно стоит переключить словарь?\n"+
+	"/rutat - русско-татарский\n/tatru - татарско-русский"
+const tatRu = "tt-ru"
+const ruTat = "ru-tt"
 
 func main() {
 	var userState = make(map[int]string)
@@ -35,67 +43,61 @@ func telegram(userState map[int]string) {
 
 	for update := range updates {
 		var msg tgbotapi.MessageConfig
-		log.Printf("Request: %s", update.Message)
 
 		var command, ok = userState[update.Message.From.ID]
-		log.Println("Command:", command)
-		log.Println("user state:", userState)
 
-		if !ok {
-			log.Println("The user not found.")
-			if !update.Message.IsCommand() {
-				log.Println("It's not command")
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода:\n" +
-					"/rutat - русско-татарский\n/tatru - татарско-русский")
-			}  else {
-				userState[update.Message.From.ID] = update.Message.Command()
-				if update.Message.Command() == "rutat" || update.Message.Command() == "tatru" {
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
-				} else {
-					msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода:\n" +
-						"/rutat - русско-татарский\n/tatru - татарско-русский")
-				}
-			}
-		} else {
-			log.Println("The user found.")
-			if update.Message.IsCommand() && (update.Message.Command() == "rutat" ||
-				update.Message.Command() == "tatru") && update.Message.Command() != userState[update.Message.From.ID] {
-				log.Println("The user comamnd update.")
-				userState[update.Message.From.ID] = update.Message.Command()
-				command = update.Message.Command()
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
-			}
-		}
+		msg, command = preDefineCommand(ok, update, msg, userState, command)
 
-		log.Println("Try to translate...")
-		switch command {
-		case "rutat":
-			inputMsg := strings.Split(update.Message.Text, " ")
-			// берем первое слово всегда
-			translatedWord := translate(inputMsg[0], "ru-tt")
-			if len(translatedWord) == 0 {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено.\nВозможно стоит переключить словарь?\n"+
-					"/rutat - русско-татарский\n/tatru - татарско-русский")
-			} else {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
-			}
-		case "tatru":
-			inputMsg := strings.Split(update.Message.Text, " ")
-			// берем первое слово всегда
-			translatedWord := translate(inputMsg[0], "tt-ru")
-			if len(translatedWord) == 0 {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Слово не найдено.\nВозможно стоит переключить словарь?\n"+
-					"/rutat - русско-татарский\n/tatru - татарско-русский")
-			} else {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord,", "))
-			}
-		case "start":
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Укажите направление перевода:\n" +
-				"/rutat - русско-татарский\n/tatru - татарско-русский")
-		}
-
-		bot.Send(msg)
+		go executeCommand(command, update, msg, bot)
 	}
+}
+func executeCommand(command string, update tgbotapi.Update, msg tgbotapi.MessageConfig, bot *tgbotapi.BotAPI) {
+	switch command {
+	case commandRuTat:
+		inputMsg := strings.Split(update.Message.Text, " ")
+		// берем первое слово всегда
+		translatedWord := translate(inputMsg[0], ruTat)
+		if len(translatedWord) == 0 {
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
+		} else {
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
+		}
+	case commandTatRu:
+		inputMsg := strings.Split(update.Message.Text, " ")
+		// берем первое слово всегда
+		translatedWord := translate(inputMsg[0], tatRu)
+		if len(translatedWord) == 0 {
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
+		} else {
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
+		}
+	case "start":
+		msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
+	}
+	bot.Send(msg)
+}
+func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig, userState map[int]string, command string) (tgbotapi.MessageConfig, string) {
+	if !ok {
+		if !update.Message.IsCommand() {
+			log.Println("It's not command")
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
+		} else {
+			userState[update.Message.From.ID] = update.Message.Command()
+			if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
+			} else {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
+			}
+		}
+	} else if update.Message.IsCommand() && update.Message.Command() != userState[update.Message.From.ID] {
+		if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
+			log.Println("The user comamnd update.")
+			userState[update.Message.From.ID] = update.Message.Command()
+			command = update.Message.Command()
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
+		}
+	}
+	return msg, command
 }
 
 func translate(msg string, dictionary string) []string {
