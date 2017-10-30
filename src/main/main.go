@@ -22,8 +22,8 @@ const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
 func main() {
-	user := new(map[int]string)
-	telegram(*user)
+	user := make(map[int]string)
+	telegram(user)
 }
 
 func telegram(userState map[int]string) {
