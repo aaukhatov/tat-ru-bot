@@ -55,22 +55,26 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[
 
 	switch command {
 	case commandRuTat:
-		inputMsg := strings.Split(update.Message.Text, " ")
-		// берем первое слово всегда
-		translatedWord := translate(inputMsg[0], ruTat)
-		if len(translatedWord) == 0 {
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
-		} else {
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
+		if !update.Message.IsCommand() {
+			inputMsg := strings.Split(update.Message.Text, " ")
+			// берем первое слово всегда
+			translatedWord := translate(inputMsg[0], ruTat)
+			if len(translatedWord) == 0 {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
+			} else {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
+			}
 		}
 	case commandTatRu:
-		inputMsg := strings.Split(update.Message.Text, " ")
-		// берем первое слово всегда
-		translatedWord := translate(inputMsg[0], tatRu)
-		if len(translatedWord) == 0 {
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
-		} else {
-			msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
+		if !update.Message.IsCommand() {
+			inputMsg := strings.Split(update.Message.Text, " ")
+			// берем первое слово всегда
+			translatedWord := translate(inputMsg[0], tatRu)
+			if len(translatedWord) == 0 {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
+			} else {
+				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
+			}
 		}
 	case "start":
 		msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
