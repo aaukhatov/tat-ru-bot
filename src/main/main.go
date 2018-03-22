@@ -1,6 +1,7 @@
 package main
 
-import ("log"
+import (
+	"log"
 	"gopkg.in/telegram-bot-api.v4"
 	"net/http"
 	"os"
@@ -16,8 +17,7 @@ const helpMessage = "Укажите направление перевода:\n" 
 	"/rutat - русско-татарский\n/tatru - татарско-русский"
 const commandRuTat = "rutat"
 const commandTatRu = "tatru"
-const wordNotFound = "Слово не найдено.\nВозможно стоит переключить словарь?\n"+
-	"/rutat - русско-татарский\n/tatru - татарско-русский"
+const wordNotFound = "Слово не найдено в словаре"
 const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
@@ -51,7 +51,7 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[
 	var command, ok = userState[update.Message.From.ID]
 	log.Println("User unlock", userState)
 
-	msg, command = preDefineCommand(ok, update, msg, userState, command)
+	msg, command = defineCommand(ok, update, msg, userState, command)
 
 	switch command {
 	case commandRuTat:
@@ -77,7 +77,7 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[
 	}
 	bot.Send(msg)
 }
-func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig,
+func defineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig,
 	userState map[int]string, command string) (tgbotapi.MessageConfig, string) {
 	if !ok {
 		if !update.Message.IsCommand() {
@@ -88,8 +88,6 @@ func preDefineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfi
 
 			if update.Message.Command() == commandRuTat || update.Message.Command() == commandTatRu {
 				msg = tgbotapi.NewMessage(update.Message.Chat.ID, "Введите слово для перевода")
-			} else {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
 			}
 		}
 	} else if update.Message.IsCommand() {
@@ -137,7 +135,7 @@ type DicResult struct {
 	Def []struct {
 		Text string `json:"text"`
 		Pos  string `json:"pos"`
-		Tr   []struct {
+		Tr []struct {
 			Text string `json:"text"`
 			Pos  string `json:"pos"`
 			Mean []struct {
