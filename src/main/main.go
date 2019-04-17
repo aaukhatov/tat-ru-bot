@@ -11,8 +11,6 @@ import (
 )
 
 const webhook = "https://tat-ru-bot.herokuapp.com/"
-const yandexApi = "dict.1.1.20171024T175215Z.d79c6c40e3a0bf31.0f44341ac31440368c75d3e143c641ab1a7acec6"
-const telegramToken = "384640172:AAFOh_vCuFizDclHRxjpsY0SGoAtlsSCHs4"
 const helpMessage = "Укажите направление перевода:\n" +
 	"/rutat - русско-татарский\n/tatru - татарско-русский"
 const commandRuTat = "rutat"
@@ -28,7 +26,7 @@ func main() {
 
 func telegram(userState map[int]string) {
 	port := os.Getenv("PORT")
-	bot, err := tgbotapi.NewBotAPI(telegramToken)
+	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_TOKEN"))
 	if err != nil {
 		log.Panic(err)
 	}
@@ -111,7 +109,7 @@ func defineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig,
 func translate(msg string, dictionary string) []string {
 
 	resp, err := http.Get("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" +
-		yandexApi + "&lang=" + dictionary + "&text=" + msg)
+		os.Getenv("YANDEX_API_TOKEN") + "&lang=" + dictionary + "&text=" + msg)
 
 	if err != nil {
 		log.Println(err)
