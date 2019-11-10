@@ -31,7 +31,6 @@ func main() {
 		log.Panic("TELEGRAM_API_TOKEN ", err)
 	}
 
-	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	if *isHeroku {
@@ -53,6 +52,7 @@ func main() {
 		}
 	} else {
 		log.Printf("Bot has been started on Local")
+		bot.Debug = true
 		bot.RemoveWebhook()
 		u := tgbotapi.NewUpdate(0)
 		u.Timeout = 60
