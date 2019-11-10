@@ -29,7 +29,8 @@ func main() {
 	}
 
 	log.Printf("Authorized on account %s", bot.Self.UserName)
-
+	var updates tgbotapi.UpdatesChannel
+	
 	if *isHeroku {
 		log.Printf("Bot has been started on Heroku")
 		port := os.Getenv("PORT")
@@ -39,30 +40,27 @@ func main() {
 		}
 
 		go http.ListenAndServe(":"+port, nil)
-		updates := bot.ListenForWebhook("/")
-
-		for {
-			select {
-			case update := <-updates:
-				executeCommand(update, bot, user)
-			}
-		}
+		updates = bot.ListenForWebhook("/")
 	} else {
 		log.Printf("Bot has been started on Local")
 		bot.Debug = true
 		bot.RemoveWebhook()
 		u := tgbotapi.NewUpdate(0)
 		u.Timeout = 60
-		updates, err := bot.GetUpdatesChan(u)
+		updates, err = bot.GetUpdatesChan(u)
 		if err != nil {
 			log.Println(err)
 		}
+	}
 
-		for {
-			select {
-			case update := <-updates:
-				executeCommand(update, bot, user)
-			}
+	handleUpdates(updates, bot, user)
+}
+
+func handleUpdates(updates tgbotapi.UpdatesChannel, bot *tgbotapi.BotAPI, user map[int]string) {
+	for {
+		select {
+		case update := <-updates:
+			executeCommand(update, bot, user)
 		}
 	}
 }
