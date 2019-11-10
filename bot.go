@@ -18,29 +18,32 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[
 	case commandRuTat:
 		if !update.Message.IsCommand() {
 			inputMsg := strings.Split(update.Message.Text, " ")
-			// берем первое слово всегда
+			// always get the first word
 			translatedWord := translate(inputMsg[0], ruTat)
-			if len(translatedWord) == 0 {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
-			} else {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
-			}
+			msg = newTelegramMessage(update.Message.Chat.ID, translatedWord)
 		}
 	case commandTatRu:
 		if !update.Message.IsCommand() {
 			inputMsg := strings.Split(update.Message.Text, " ")
-			// берем первое слово всегда
+			// always get the first word
 			translatedWord := translate(inputMsg[0], tatRu)
-			if len(translatedWord) == 0 {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, wordNotFound)
-			} else {
-				msg = tgbotapi.NewMessage(update.Message.Chat.ID, strings.Join(translatedWord, ", "))
-			}
+			msg = newTelegramMessage(update.Message.Chat.ID, translatedWord)
 		}
 	case "start":
 		msg = tgbotapi.NewMessage(update.Message.Chat.ID, helpMessage)
 	}
 	bot.Send(msg)
+}
+
+func newTelegramMessage(chatID int64, translatedWord []string) tgbotapi.MessageConfig {
+	var msg tgbotapi.MessageConfig
+	if len(translatedWord) == 0 {
+		msg = tgbotapi.NewMessage(chatID, wordNotFound)
+	} else {
+		msg = tgbotapi.NewMessage(chatID, strings.Join(translatedWord, ", "))
+	}
+	
+	return msg
 }
 
 func defineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig,
