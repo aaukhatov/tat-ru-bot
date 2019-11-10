@@ -1,1 +1,1 @@
-web: bin/main --heroku
+web: bin/tat-ru-bot --heroku
