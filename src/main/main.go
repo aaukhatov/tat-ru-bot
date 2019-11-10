@@ -1,12 +1,13 @@
 package main
 
 import (
-	"log"
+	"encoding/json"
+	"flag"
 	"gopkg.in/telegram-bot-api.v4"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
-	"io/ioutil"
-	"encoding/json"
 	"strings"
 )
 
@@ -20,29 +21,55 @@ const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
 func main() {
-	user := make(map[int]string)
-	telegram(user)
-}
+	var isHeroku = flag.Bool("heroku", false, "Heroku mode.")
+	flag.Parse()
 
-func telegram(userState map[int]string) {
-	port := os.Getenv("PORT")
+	user := make(map[int]string)
+
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_TOKEN"))
 	if err != nil {
-		log.Panic(err)
+		log.Panic("TELEGRAM_API_TOKEN ", err)
 	}
+
 	bot.Debug = true
 	log.Printf("Authorized on account %s", bot.Self.UserName)
-	_, err = bot.SetWebhook(tgbotapi.NewWebhook(webhook))
-	if err != nil {
-		log.Fatal(err)
-	}
-	updates := bot.ListenForWebhook("/")
-	go http.ListenAndServe(":"+port, nil)
 
-	for update := range updates {
-		go executeCommand(update, bot, userState)
+	if *isHeroku {
+		log.Printf("Bot has been started on Heroku")
+		port := os.Getenv("PORT")
+		_, err = bot.SetWebhook(tgbotapi.NewWebhook(webhook))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		go http.ListenAndServe(":"+port, nil)
+		updates := bot.ListenForWebhook("/")
+
+		for {
+			select {
+			case update := <-updates:
+				executeCommand(update, bot, user)
+			}
+		}
+	} else {
+		log.Printf("Bot has been started on Local")
+		bot.RemoveWebhook()
+		u := tgbotapi.NewUpdate(0)
+		u.Timeout = 60
+		updates, err := bot.GetUpdatesChan(u)
+		if err != nil {
+			log.Println(err)
+		}
+
+		for {
+			select {
+			case update := <-updates:
+				executeCommand(update, bot, user)
+			}
+		}
 	}
 }
+
 func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[int]string) {
 	var msg tgbotapi.MessageConfig
 	log.Println("User lock", userState)
@@ -79,6 +106,7 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[
 	}
 	bot.Send(msg)
 }
+
 func defineCommand(ok bool, update tgbotapi.Update, msg tgbotapi.MessageConfig,
 	userState map[int]string, command string) (tgbotapi.MessageConfig, string) {
 	if !ok {
@@ -112,7 +140,7 @@ func translate(msg string, dictionary string) []string {
 		os.Getenv("YANDEX_API_TOKEN") + "&lang=" + dictionary + "&text=" + msg)
 
 	if err != nil {
-		log.Println(err)
+		log.Println("YANDEX_API_TOKEN ", err)
 	}
 
 	defer resp.Body.Close()
@@ -137,7 +165,7 @@ type DicResult struct {
 	Def []struct {
 		Text string `json:"text"`
 		Pos  string `json:"pos"`
-		Tr []struct {
+		Tr   []struct {
 			Text string `json:"text"`
 			Pos  string `json:"pos"`
 			Mean []struct {
