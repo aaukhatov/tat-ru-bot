@@ -60,7 +60,7 @@ func handleUpdates(updates tgbotapi.UpdatesChannel, bot *tgbotapi.BotAPI, user m
 	for {
 		select {
 		case update := <-updates:
-			executeCommand(update, bot, user)
+			go executeCommand(update, bot, user)
 		}
 	}
 }
