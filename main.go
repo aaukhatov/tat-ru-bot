@@ -9,18 +9,13 @@ import (
 )
 
 const webhook = "https://tat-ru-bot.herokuapp.com/"
-const helpMessage = "Укажите направление перевода:\n" +
-	"/rutat - русско-татарский\n/tatru - татарско-русский"
-const commandRuTat = "rutat"
-const commandTatRu = "tatru"
-const wordNotFound = "Слово не найдено в словаре"
 const tatRu = "tt-ru"
 const ruTat = "ru-tt"
 
 func main() {
 	var isHeroku = flag.Bool("heroku", false, "Heroku mode.")
 	flag.Parse()
-
+	translationChat := newChat()
 	user := make(map[int]string)
 
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_TOKEN"))
@@ -28,11 +23,11 @@ func main() {
 		log.Panic("TELEGRAM_API_TOKEN ", err)
 	}
 
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	log.Printf("[INFO] Authorized on account %s", bot.Self.UserName)
 	var updates tgbotapi.UpdatesChannel
-	
+
 	if *isHeroku {
-		log.Printf("Bot has been started on Heroku")
+		log.Printf("[INFO] Bot has been started on Heroku")
 		port := os.Getenv("PORT")
 		_, err = bot.SetWebhook(tgbotapi.NewWebhook(webhook))
 		if err != nil {
@@ -42,7 +37,7 @@ func main() {
 		go http.ListenAndServe(":"+port, nil)
 		updates = bot.ListenForWebhook("/")
 	} else {
-		log.Printf("Bot has been started on Local")
+		log.Printf("[DEBUG] Bot has been started on Local")
 		bot.Debug = true
 		bot.RemoveWebhook()
 		u := tgbotapi.NewUpdate(0)
@@ -53,14 +48,15 @@ func main() {
 		}
 	}
 
-	handleUpdates(updates, bot, user)
+	go translationChat.run(bot)
+	handleUpdates(updates, bot, user, translationChat)
 }
 
-func handleUpdates(updates tgbotapi.UpdatesChannel, bot *tgbotapi.BotAPI, user map[int]string) {
+func handleUpdates(updates tgbotapi.UpdatesChannel, bot *tgbotapi.BotAPI, user map[int]string, c *chat) {
 	for {
 		select {
 		case update := <-updates:
-			go executeCommand(update, bot, user)
+			go executeCommand(update, bot, user, c)
 		}
 	}
 }
