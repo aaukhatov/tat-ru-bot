@@ -16,7 +16,7 @@ func main() {
 	var isHeroku = flag.Bool("heroku", false, "Heroku mode.")
 	flag.Parse()
 	translationChat := newChat()
-	user := make(map[int]string)
+	//user := make(map[int]string)
 
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_TOKEN"))
 	if err != nil {
@@ -48,15 +48,5 @@ func main() {
 		}
 	}
 
-	go translationChat.run(bot)
-	handleUpdates(updates, bot, user, translationChat)
-}
-
-func handleUpdates(updates tgbotapi.UpdatesChannel, bot *tgbotapi.BotAPI, user map[int]string, c *chat) {
-	for {
-		select {
-		case update := <-updates:
-			go executeCommand(update, bot, user, c)
-		}
-	}
+	translationChat.run(bot, updates)
 }

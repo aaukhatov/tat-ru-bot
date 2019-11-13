@@ -22,33 +22,32 @@ const helloMsg = `Привет, %s %s! 😊🙌
 Сначала выберите направление перевода, затем пишите слово.
 `
 
-func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[int]string, c *chat) {
+func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, translationChat *chat) {
 	var msg tgbotapi.MessageConfig
 
 	if update.Message.Command() == cmdAbout {
-		userState[update.Message.From.ID] = cmdAbout
 		msg = tgbotapi.NewMessage(update.Message.Chat.ID, aboutMsg)
 		msg.ParseMode = "Markdown"
 	}
 
 	if update.Message.Command() == cmdStart {
-		userState[update.Message.From.ID] = cmdStart
+		translationChat.userState[update.Message.From.ID] = cmdStart
 		msg = tgbotapi.NewMessage(update.Message.Chat.ID,
 			fmt.Sprintf(helloMsg, update.Message.From.FirstName, update.Message.From.LastName))
 		msg.ParseMode = "Markdown"
 	}
 
 	if update.Message.Text == cmdRuTat {
-		userState[update.Message.From.ID] = cmdRuTat
+		translationChat.userState[update.Message.From.ID] = cmdRuTat
 		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "✏️ Введите слово для перевода 😊")
 	}
 
 	if update.Message.Text == cmdTatRu {
-		userState[update.Message.From.ID] = cmdTatRu
+		translationChat.userState[update.Message.From.ID] = cmdTatRu
 		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "✏️ Тәрҗемә итергә сүзеңне яз 😊")
 	}
 
-	command := userState[update.Message.From.ID]
+	command := translationChat.userState[update.Message.From.ID]
 
 	if update.Message.Text != command {
 		switch command {
@@ -66,7 +65,7 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, userState map[
 		}
 	}
 
-	c.botReponse <- msg
+	translationChat.botReponse <- msg
 }
 
 func newTelegramMessage(chatID int64, translatedWord []string) tgbotapi.MessageConfig {
@@ -80,30 +79,27 @@ func newTelegramMessage(chatID int64, translatedWord []string) tgbotapi.MessageC
 	return msg
 }
 
-type userState struct {
-	value map[int]string
-}
-
 type chat struct {
-	userMsg    chan string
 	botReponse chan tgbotapi.MessageConfig
+	userState  map[int]string
 }
 
 func newChat() *chat {
 	return &chat{
-		userMsg:    make(chan string),
 		botReponse: make(chan tgbotapi.MessageConfig),
+		userState: make(map[int]string),
 	}
 }
 
-func (c *chat) run(bot *tgbotapi.BotAPI) {
+func (c *chat) run(bot *tgbotapi.BotAPI, updates tgbotapi.UpdatesChannel) {
 	for {
 		select {
-		case userMsg := <-c.userMsg:
-			log.Printf("[INFO] userMsg: %s", userMsg)
+		case userMsg := <-updates:
+			log.Printf("[INFO] Received user message '%s'", userMsg.Message.Text)
+			go executeCommand(userMsg, bot, c)
 
 		case botReponse := <-c.botReponse:
-			log.Printf("[INFO] botReponse: %s", botReponse.Text)
+			log.Printf("[INFO] Sent a reponse '%s'", botReponse.Text)
 			botReponse.ReplyMarkup = tgbotapi.NewReplyKeyboard(replyButton())
 			bot.Send(botReponse)
 		}
