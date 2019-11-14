@@ -36,12 +36,21 @@ type TranslationResult struct {
 
 func translate(msg string, dictionary string) string {
 	text := []byte("text=" + msg)
-	
-	resp, err := http.Post("https://translate.yandex.net/api/v1.5/tr.json/translate?key="+
-		os.Getenv("YANDEX_API_TOKEN")+"&lang="+dictionary, "application/x-www-form-urlencoded", bytes.NewBuffer(text))
+	client := &http.Client{}
+	yandexAPI := os.Getenv("YANDEX_API_TOKEN")
+
+	if yandexAPI == "" {
+		log.Println("[ERROR] YANDEX_API_TOKEN is requered parameter")
+	}
+
+	req, err := http.NewRequest("POST", "https://translate.yandex.net/api/v1.5/tr.json/translate?key="+
+	yandexAPI+"&lang="+dictionary, bytes.NewBuffer(text))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println("YANDEX_API_TOKEN ", err)
+		log.Println("[ERROR] Something went wrong", err)
 	}
 
 	defer resp.Body.Close()
