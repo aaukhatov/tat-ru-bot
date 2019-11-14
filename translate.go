@@ -39,7 +39,7 @@ func translate(msg string, dictionary string) string {
 	client := &http.Client{}
 	yandexAPI := os.Getenv("YANDEX_API_TOKEN")
 
-	if yandexAPI == "" {
+	if len(yandexAPI) == 0 {
 		log.Println("[ERROR] YANDEX_API_TOKEN is requered parameter")
 	}
 
