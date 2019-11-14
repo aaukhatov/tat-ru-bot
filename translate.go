@@ -66,5 +66,7 @@ func translate(msg string, dictionary string) string {
 		log.Println("[ERROR] Could not be unmarshalled ", err)
 	}
 
+	log.Printf("[INFO] Unmarshalled text: %s", translatedWord.Text)
+
 	return translatedWord.Text[0]
 }
