@@ -9,6 +9,9 @@ import (
 	"os"
 )
 
+const tatRu = "tt-ru"
+const ruTat = "ru-tt"
+
 // DicResult represents translation result
 type DicResult struct {
 	Head struct {
@@ -70,12 +73,12 @@ func translate(msg string, dictionary string) string {
 		log.Println("[ERROR] Unsuccessful response ", translatedWord)
 	}
 
-	log.Printf("[INFO] Unmarshalled text: %s", translatedWord.Text)
+	log.Println("[INFO] Unmarshalled text ", translatedWord.Text)
 
 	var response string
 	if len(translatedWord.Text) == 0 {
 		log.Println("[WARN] Empty response", translatedWord.Text)
-		response = "Не удалось выполнить перевод..."
+		response = "Не удалось выполнить перевод. Технические проблемы..."
 	} else {
 		response = translatedWord.Text[0]
 	}

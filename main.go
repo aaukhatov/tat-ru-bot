@@ -9,8 +9,6 @@ import (
 )
 
 const webhook = "https://tat-ru-bot.herokuapp.com/"
-const tatRu = "tt-ru"
-const ruTat = "ru-tt"
 
 func main() {
 	var isHeroku = flag.Bool("heroku", false, "Heroku mode.")
@@ -37,7 +35,6 @@ func main() {
 		updates = bot.ListenForWebhook("/")
 	} else {
 		log.Printf("[DEBUG] Bot has been started on Local")
-		// bot.Debug = true
 		bot.RemoveWebhook()
 		u := tgbotapi.NewUpdate(0)
 		u.Timeout = 60
