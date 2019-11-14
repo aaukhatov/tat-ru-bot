@@ -52,15 +52,11 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, translationCha
 	if update.Message.Text != command {
 		switch command {
 		case cmdRuTat:
-			inputMsg := strings.Split(update.Message.Text, " ")
-			// always get the first word
-			translatedWord := translate(inputMsg[0], ruTat)
+			translatedWord := translate(update.Message.Text, ruTat)
 			msg = newTelegramMessage(update.Message.Chat.ID, translatedWord)
 
 		case cmdTatRu:
-			inputMsg := strings.Split(update.Message.Text, " ")
-			// always get the first word
-			translatedWord := translate(inputMsg[0], tatRu)
+			translatedWord := translate(update.Message.Text, tatRu)
 			msg = newTelegramMessage(update.Message.Chat.ID, translatedWord)
 		}
 	}
@@ -68,7 +64,7 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, translationCha
 	translationChat.botReponse <- msg
 }
 
-func newTelegramMessage(chatID int64, translatedWord []string) tgbotapi.MessageConfig {
+func newTelegramMessageByArray(chatID int64, translatedWord []string) tgbotapi.MessageConfig {
 	var msg tgbotapi.MessageConfig
 	if len(translatedWord) == 0 {
 		msg = tgbotapi.NewMessage(chatID, wordNotFoundMsg)
@@ -76,6 +72,16 @@ func newTelegramMessage(chatID int64, translatedWord []string) tgbotapi.MessageC
 		msg = tgbotapi.NewMessage(chatID, strings.Join(translatedWord, ", "))
 	}
 
+	return msg
+}
+
+func newTelegramMessage(chatID int64, translatedWord string) tgbotapi.MessageConfig {
+	var msg tgbotapi.MessageConfig
+	if len(translatedWord) == 0 {
+		msg = tgbotapi.NewMessage(chatID, wordNotFoundMsg)
+	} else {
+		msg = tgbotapi.NewMessage(chatID, translatedWord)
+	}
 	return msg
 }
 

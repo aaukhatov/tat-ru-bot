@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -25,27 +26,36 @@ type DicResult struct {
 	} `json:"def"`
 }
 
-func translate(msg string, dictionary string) []string {
+// TranslationResult is represents Yandex Translate response
+type TranslationResult struct {
+	Code int    `json:"code"`
+	Lang string `json:"lang"`
+	Text []string `json:"text"`
+	Message string `json: "message"`
+}
 
-	resp, err := http.Get("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" +
-		os.Getenv("YANDEX_API_TOKEN") + "&lang=" + dictionary + "&text=" + msg)
+func translate(msg string, dictionary string) string {
+	text := []byte("text=" + msg)
+	
+	resp, err := http.Post("https://translate.yandex.net/api/v1.5/tr.json/translate?key="+
+		os.Getenv("YANDEX_API_TOKEN")+"&lang="+dictionary, "application/x-www-form-urlencoded", bytes.NewBuffer(text))
 
 	if err != nil {
 		log.Println("YANDEX_API_TOKEN ", err)
 	}
 
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("[ERROR] Could not read a response", err)
+	}
+	
+	var translatedWord *TranslationResult
 
-	var translatedWord *DicResult
-	var translatedResponse []string
-	json.Unmarshal(body, &translatedWord)
-
-	for _, def := range translatedWord.Def {
-		for _, tr := range def.Tr {
-			translatedResponse = append(translatedResponse, tr.Text)
-		}
+	err = json.Unmarshal(body, &translatedWord)
+	if err != nil {
+		log.Println("[ERROR] Could not be unmarshalled ", err)
 	}
 
-	return translatedResponse
+	return translatedWord.Text[0]
 }

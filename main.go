@@ -16,7 +16,6 @@ func main() {
 	var isHeroku = flag.Bool("heroku", false, "Heroku mode.")
 	flag.Parse()
 	translationChat := newChat()
-	//user := make(map[int]string)
 
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_TOKEN"))
 	if err != nil {
@@ -38,7 +37,7 @@ func main() {
 		updates = bot.ListenForWebhook("/")
 	} else {
 		log.Printf("[DEBUG] Bot has been started on Local")
-		bot.Debug = true
+		// bot.Debug = true
 		bot.RemoveWebhook()
 		u := tgbotapi.NewUpdate(0)
 		u.Timeout = 60
