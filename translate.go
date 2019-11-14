@@ -66,7 +66,19 @@ func translate(msg string, dictionary string) string {
 		log.Println("[ERROR] Could not be unmarshalled ", err)
 	}
 
+	if translatedWord.Code != 200 {
+		log.Println("[ERROR] Unsuccessful response ", translatedWord)
+	}
+
 	log.Printf("[INFO] Unmarshalled text: %s", translatedWord.Text)
 
-	return translatedWord.Text[0]
+	var response string
+	if len(translatedWord.Text) == 0 {
+		log.Println("[WARN] Empty response", translatedWord.Text)
+		response = "Не удалось выполнить перевод..."
+	} else {
+		response = translatedWord.Text[0]
+	}
+
+	return response
 }
