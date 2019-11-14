@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	tgbotapi "gopkg.in/telegram-bot-api.v4"
 )
@@ -15,11 +14,11 @@ const cmdStart = "start"
 const aboutMsg = `Arthur Aukhatov - @aaukhatov ©️`
 const wordNotFoundMsg = "🤷‍♀️ Слово не найдено в словаре ☹️"
 const helloMsg = `Привет, %s %s! 😊🙌
-Я бот умеющий делать перевод слов.
+Я бот, могу делать перевод текста.
 - татарско-русский
 - русско-татарский
 
-Сначала выберите направление перевода, затем пишите слово.
+Сначала выберите направление перевода, затем пишите текст.
 `
 
 func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, translationChat *chat) {
@@ -39,12 +38,12 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, translationCha
 
 	if update.Message.Text == cmdRuTat {
 		translationChat.userState[update.Message.From.ID] = cmdRuTat
-		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "✏️ Введите слово для перевода 😊")
+		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "✏️ Введите текст для перевода 😊")
 	}
 
 	if update.Message.Text == cmdTatRu {
 		translationChat.userState[update.Message.From.ID] = cmdTatRu
-		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "✏️ Тәрҗемә итергә сүзеңне яз 😊")
+		msg = tgbotapi.NewMessage(update.Message.Chat.ID, "✏️ Тәрҗемә итергә сүзләреңне яз 😊")
 	}
 
 	command := translationChat.userState[update.Message.From.ID]
@@ -52,31 +51,16 @@ func executeCommand(update tgbotapi.Update, bot *tgbotapi.BotAPI, translationCha
 	if update.Message.Text != command {
 		switch command {
 		case cmdRuTat:
-			inputMsg := strings.Split(update.Message.Text, " ")
-			// always get the first word
-			translatedWord := translate(inputMsg[0], ruTat)
-			msg = newTelegramMessage(update.Message.Chat.ID, translatedWord)
+			translatedWord := translate(update.Message.Text, ruTat)
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, translatedWord)
 
 		case cmdTatRu:
-			inputMsg := strings.Split(update.Message.Text, " ")
-			// always get the first word
-			translatedWord := translate(inputMsg[0], tatRu)
-			msg = newTelegramMessage(update.Message.Chat.ID, translatedWord)
+			translatedWord := translate(update.Message.Text, tatRu)
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, translatedWord)
 		}
 	}
 
 	translationChat.botReponse <- msg
-}
-
-func newTelegramMessage(chatID int64, translatedWord []string) tgbotapi.MessageConfig {
-	var msg tgbotapi.MessageConfig
-	if len(translatedWord) == 0 {
-		msg = tgbotapi.NewMessage(chatID, wordNotFoundMsg)
-	} else {
-		msg = tgbotapi.NewMessage(chatID, strings.Join(translatedWord, ", "))
-	}
-
-	return msg
 }
 
 type chat struct {

@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 )
+
+const tatRu = "tt-ru"
+const ruTat = "ru-tt"
 
 // DicResult represents translation result
 type DicResult struct {
@@ -25,27 +29,59 @@ type DicResult struct {
 	} `json:"def"`
 }
 
-func translate(msg string, dictionary string) []string {
+// TranslationResult is represents Yandex Translate response
+type TranslationResult struct {
+	Code int    `json:"code"`
+	Lang string `json:"lang"`
+	Text []string `json:"text"`
+	Message string `json: "message"`
+}
 
-	resp, err := http.Get("https://dictionary.yandex.net/api/v1/dicservice.json/lookup?key=" +
-		os.Getenv("YANDEX_API_TOKEN") + "&lang=" + dictionary + "&text=" + msg)
+func translate(msg string, dictionary string) string {
+	text := []byte("text=" + msg)
+	client := &http.Client{}
+	yandexAPI := os.Getenv("YANDEX_API_TOKEN")
+
+	if len(yandexAPI) == 0 {
+		log.Println("[ERROR] YANDEX_API_TOKEN is requered parameter")
+	}
+
+	req, err := http.NewRequest("POST", "https://translate.yandex.net/api/v1.5/tr.json/translate?key="+
+	yandexAPI+"&lang="+dictionary, bytes.NewBuffer(text))
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println("YANDEX_API_TOKEN ", err)
+		log.Println("[ERROR] Something went wrong", err)
 	}
 
 	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("[ERROR] Could not read a response", err)
+	}
+	
+	var translatedWord *TranslationResult
 
-	var translatedWord *DicResult
-	var translatedResponse []string
-	json.Unmarshal(body, &translatedWord)
-
-	for _, def := range translatedWord.Def {
-		for _, tr := range def.Tr {
-			translatedResponse = append(translatedResponse, tr.Text)
-		}
+	err = json.Unmarshal(body, &translatedWord)
+	if err != nil {
+		log.Println("[ERROR] Could not be unmarshalled ", err)
 	}
 
-	return translatedResponse
+	if translatedWord.Code != 200 {
+		log.Println("[ERROR] Unsuccessful response ", translatedWord)
+	}
+
+	log.Println("[INFO] Unmarshalled text ", translatedWord.Text)
+
+	var response string
+	if len(translatedWord.Text) == 0 {
+		log.Println("[WARN] Empty response", translatedWord.Text)
+		response = "Не удалось выполнить перевод. Технические проблемы..."
+	} else {
+		response = translatedWord.Text[0]
+	}
+
+	return response
 }
