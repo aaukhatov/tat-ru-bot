@@ -9,10 +9,13 @@ Translation Telegram Bot
 
 # Screenshots
 
+### Запуск бота
 ![start](./img/pic-start.png)
 
+### Татарско-русский перевод
 ![tat-ru](./img/pic-tat-ru.png)
 
+### Русско-татарский перевод
 ![ru-tat](./img/pic-ru-tat.png)
 
 # Для разработчиков
