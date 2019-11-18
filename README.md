@@ -9,6 +9,11 @@ Translation Telegram Bot
 
 # Screenshots
 
+![start](./img/pic-start.png)
+
+![tat-ru](./img/pic-tat-ru.png)
+
+![ru-tat](./img/pic-ru-tat.png)
 
 # Для разработчиков
 
